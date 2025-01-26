@@ -42,6 +42,13 @@ class DatabaseManager:
             FOREIGN KEY(user_id) REFERENCES users(id)
         )''')
 
+        # 奖品池表
+        c.execute('''CREATE TABLE IF NOT EXISTS prize_pool (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    prize_name TEXT NOT NULL,
+                    quantity INTEGER NOT NULL
+                )''')
+
         conn.commit()
         conn.close()
 
@@ -59,3 +66,16 @@ class DatabaseManager:
         results = c.fetchall()
         conn.close()
         return results
+
+    # 奖品池管理方法
+    def add_prize(self, prize_name, quantity):
+        query = "INSERT INTO prize_pool (prize_name, quantity) VALUES (?, ?)"
+        self.execute_query(query, (prize_name, quantity))
+
+    def fetch_prizes(self):
+        query = "SELECT id, prize_name, quantity FROM prize_pool WHERE quantity > 0"
+        return self.fetch_query(query)
+
+    def update_prize_quantity(self, prize_id, new_quantity):
+        query = "UPDATE prize_pool SET quantity = ? WHERE id = ?"
+        self.execute_query(query, (new_quantity, prize_id))

@@ -1,3 +1,5 @@
+import random
+
 import streamlit as st
 from datetime import datetime, time
 
@@ -98,3 +100,45 @@ class UserPages:
             st.session_state["page"] = "login"
             st.error("请先登录")
             st.rerun()
+
+    def lottery_page(self):
+        if "is_logged_in" in st.session_state and st.session_state["is_logged_in"]:
+            user = st.session_state["user"]
+            st.title("无限进步 - 抽奖")
+            query = "SELECT points FROM users WHERE id=?"
+            points = self.db_manager.fetch_query(query, (user[0],))[0][0]
+            st.subheader(f"您的当前积分：{points}")
+
+            # 检查奖品池
+            prizes = self.db_manager.fetch_prizes()
+            if not prizes:
+                st.warning("奖品池为空，稍后再试！")
+                return
+
+            st.write("### 当前奖品池：")
+            for prize in prizes:
+                st.write(f"奖品：{prize[1]}，剩余数量：{prize[2]}")
+
+            if st.button("抽奖"):
+                if points < 10:
+                    st.error("您的积分不足，至少需要 10 积分！")
+                else:
+                    selected_prize = random.choice(prizes)
+                    prize_id, prize_name, quantity = selected_prize
+
+                    # 扣除积分
+                    new_points = points - 10
+                    self.db_manager.execute_query("UPDATE users SET points = ? WHERE id = ?", (new_points, user[0]))
+
+                    # 更新奖品库存
+                    self.db_manager.update_prize_quantity(prize_id, quantity - 1)
+
+                    # 添加到奖励记录
+                    self.db_manager.execute_query(
+                        "INSERT INTO rewards (user_id, reward_name, date) VALUES (?, ?, ?)",
+                        (user[0], prize_name, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                    )
+
+                    st.success(f"恭喜您抽中了奖品：{prize_name}！")
+        else:
+            st.session_state["page"] = "login"
