@@ -131,50 +131,54 @@ class UserPages:
         if "is_logged_in" in st.session_state and st.session_state["is_logged_in"]:
             user = st.session_state["user"]
             st.title("无限进步 - 抽奖")
+
+            # 获取当前用户积分
             query = "SELECT points FROM users WHERE id=?"
             points = self.db_manager.fetch_query(query, (user[0],))[0][0]
             st.subheader(f"您的当前积分：{points}")
 
             # 检查奖品池
             prizes = self.db_manager.fetch_query(
-                "SELECT id, prize_name, quantity, description, image_url FROM prize_pool WHERE quantity > 0")
+                "SELECT id, prize_name, quantity, weight FROM prize_pool WHERE quantity > 0")
             if not prizes:
                 st.warning("奖品池为空，稍后再试！")
                 return
 
-
-            # 获取奖品及权重列表
-            prize_ids = [prize[0] for prize in prizes]
-            prize_names = [prize[1] for prize in prizes]
-            prize_weights = [prize[3] for prize in prizes]
             st.write("### 当前奖品池：")
             for prize in prizes:
-                st.subheader(f"{prize[1]} （剩余数量：{prize[2]}）")
-                if prize[3]:  # 如果有描述
-                    st.write(prize[3])
-                if prize[4]:  # 如果有图片
-                    st.image(prize[4], use_container_width=True)
+                st.write(f"奖品：{prize[1]}，剩余数量：{prize[2]}")
 
             if st.button("抽奖"):
                 if points < 10:
                     st.error("您的积分不足，至少需要 10 积分！")
                 else:
                     # 根据权重随机选择奖品
-                    selected_prize_index = random.choices(range(len(prize_ids)), weights=prize_weights, k=1)[0]
+                    prize_weights = [prize[3] for prize in prizes]
+                    selected_prize_index = random.choices(range(len(prizes)), weights=prize_weights, k=1)[0]
                     selected_prize = prizes[selected_prize_index]
-                    prize_id, prize_name, quantity = selected_prize[:3]
+                    prize_id, prize_name, quantity, weight = selected_prize
 
-                    # 更新数据库：减少奖品数量
+                    # 扣除积分
+                    new_points = points - 10
+                    self.db_manager.execute_query("UPDATE users SET points = ? WHERE id = ?", (new_points, user[0]))
+
+                    # 更新奖品库
                     self.db_manager.execute_query(
                         "UPDATE prize_pool SET quantity = quantity - 1 WHERE id = ?", (prize_id,)
                     )
 
-                    # 将奖品添加到用户奖励记录
+                    # 添加到奖励记录
                     self.db_manager.execute_query(
                         "INSERT INTO rewards (user_id, reward_name, date) VALUES (?, ?, ?)",
                         (user[0], prize_name, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
                     )
 
-                    st.success(f"恭喜您抽中了奖品：{prize_name}！")
+                    st.success(f"恭喜您抽中奖品：{prize_name}！")
+
+                    # 刷新页面以显示最新积分
+                    st.session_state["page"] = "lottery"
+                    st.rerun()
         else:
             st.session_state["page"] = "login"
+            st.error("请先登录")
+            st.rerun()
