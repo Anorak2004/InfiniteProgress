@@ -67,12 +67,18 @@ class UserPages:
         if "is_logged_in" in st.session_state and st.session_state["is_logged_in"]:
             user = st.session_state["user"]
             st.title(f"无限进步 - 欢迎，{user[1]}！")
+
+            # 实时从数据库获取积分
             query = "SELECT points FROM users WHERE id=?"
             points = self.db_manager.fetch_query(query, (user[0],))[0][0]
             st.subheader(f"您的积分：{points}")
 
             st.write("### 您的活动记录")
-            query = "SELECT date, start_time, end_time, activity_type, points FROM records WHERE user_id=?"
+            query = """
+                SELECT date, start_time, end_time, activity_type, points 
+                FROM records 
+                WHERE user_id=?
+            """
             records = self.db_manager.fetch_query(query, (user[0],))
             for record in records:
                 st.write(f"日期：{record[0]}，时间：{record[1]}-{record[2]}，活动：{record[3]}，积分：{record[4]}")
@@ -92,10 +98,21 @@ class UserPages:
 
             if st.button("提交记录"):
                 points = self.calculate_points(start_time, end_time, activity_type)
-                query = "INSERT INTO records (user_id, date, start_time, end_time, activity_type, points) VALUES (?, ?, ?, ?, ?, ?)"
-                self.db_manager.execute_query(query, (
-                user[0], str(date), str(start_time), str(end_time), activity_type, points))
+                query = """
+                    INSERT INTO records (user_id, date, start_time, end_time, activity_type, points) 
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """
+                self.db_manager.execute_query(
+                    query, (user[0], str(date), str(start_time), str(end_time), activity_type, points)
+                )
+
+                # 更新用户积分
+                update_query = "UPDATE users SET points = points + ? WHERE id = ?"
+                self.db_manager.execute_query(update_query, (points, user[0]))
+
                 st.success(f"记录上传成功！本次获得积分：{points}")
+                st.session_state["page"] = "dashboard"
+                st.rerun()
         else:
             st.session_state["page"] = "login"
             st.error("请先登录")
