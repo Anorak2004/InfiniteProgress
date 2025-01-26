@@ -72,9 +72,9 @@ class DatabaseManager:
         query = "INSERT INTO prize_pool (prize_name, quantity) VALUES (?, ?)"
         self.execute_query(query, (prize_name, quantity))
 
-    def fetch_prizes(self):
-        query = "SELECT id, prize_name, quantity FROM prize_pool WHERE quantity > 0"
-        return self.fetch_query(query)
+    # def fetch_prizes(self):
+    #     query = "SELECT id, prize_name, quantity FROM prize_pool WHERE quantity > 0"
+    #     return self.fetch_query(query)
 
     def update_prize_quantity(self, prize_id, new_quantity):
         query = "UPDATE prize_pool SET quantity = ? WHERE id = ?"

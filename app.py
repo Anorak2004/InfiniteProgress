@@ -1,14 +1,17 @@
 # app.py
 import streamlit as st
+
+from admin_pages import AdminPages
 from database_manager import DatabaseManager
 from user_manager import UserManager
 from user_pages import UserPages
 
 if __name__ == "__main__":
-    db_path = "data/main.db"
+    db_path = "data/main_bak.db"
     db_manager = DatabaseManager(db_path)
     user_manager = UserManager(db_manager)
     user_pages = UserPages(db_manager, user_manager)
+    admin_pages = AdminPages(db_manager)
 
     st.sidebar.title("无限进步 - 菜单")
 
@@ -38,3 +41,6 @@ if __name__ == "__main__":
         user_pages.upload_record_page()
     elif page == "lottery":
         user_pages.lottery_page()
+    elif page == "admin":
+        admin_pages.admin_dashboard()
+

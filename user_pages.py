@@ -47,7 +47,6 @@ class UserPages:
                 st.session_state["is_logged_in"] = True
                 st.session_state["page"] = "admin" if user[4] else "dashboard"
                 st.success("登录成功！正在跳转...")
-                st.query_params.page = "dashboard"
                 st.rerun()
             else:
                 st.error("用户名或密码错误")
@@ -82,6 +81,16 @@ class UserPages:
             records = self.db_manager.fetch_query(query, (user[0],))
             for record in records:
                 st.write(f"日期：{record[0]}，时间：{record[1]}-{record[2]}，活动：{record[3]}，积分：{record[4]}")
+
+            # 获得奖品
+            st.write("### 您获得的奖品")
+            query = "SELECT reward_name, date FROM rewards WHERE user_id=?"
+            rewards = self.db_manager.fetch_query(query, (user[0],))
+            if rewards:
+                for reward in rewards:
+                    st.write(f"奖品：{reward[0]}，获得日期：{reward[1]}")
+            else:
+                st.write("您还没有获得奖品！")
         else:
             st.session_state["page"] = "login"
             st.error("请先登录")
@@ -127,30 +136,40 @@ class UserPages:
             st.subheader(f"您的当前积分：{points}")
 
             # 检查奖品池
-            prizes = self.db_manager.fetch_prizes()
+            prizes = self.db_manager.fetch_query(
+                "SELECT id, prize_name, quantity, description, image_url FROM prize_pool WHERE quantity > 0")
             if not prizes:
                 st.warning("奖品池为空，稍后再试！")
                 return
 
+
+            # 获取奖品及权重列表
+            prize_ids = [prize[0] for prize in prizes]
+            prize_names = [prize[1] for prize in prizes]
+            prize_weights = [prize[3] for prize in prizes]
             st.write("### 当前奖品池：")
             for prize in prizes:
-                st.write(f"奖品：{prize[1]}，剩余数量：{prize[2]}")
+                st.subheader(f"{prize[1]} （剩余数量：{prize[2]}）")
+                if prize[3]:  # 如果有描述
+                    st.write(prize[3])
+                if prize[4]:  # 如果有图片
+                    st.image(prize[4], use_container_width=True)
 
             if st.button("抽奖"):
                 if points < 10:
                     st.error("您的积分不足，至少需要 10 积分！")
                 else:
-                    selected_prize = random.choice(prizes)
-                    prize_id, prize_name, quantity = selected_prize
+                    # 根据权重随机选择奖品
+                    selected_prize_index = random.choices(range(len(prize_ids)), weights=prize_weights, k=1)[0]
+                    selected_prize = prizes[selected_prize_index]
+                    prize_id, prize_name, quantity = selected_prize[:3]
 
-                    # 扣除积分
-                    new_points = points - 10
-                    self.db_manager.execute_query("UPDATE users SET points = ? WHERE id = ?", (new_points, user[0]))
+                    # 更新数据库：减少奖品数量
+                    self.db_manager.execute_query(
+                        "UPDATE prize_pool SET quantity = quantity - 1 WHERE id = ?", (prize_id,)
+                    )
 
-                    # 更新奖品库存
-                    self.db_manager.update_prize_quantity(prize_id, quantity - 1)
-
-                    # 添加到奖励记录
+                    # 将奖品添加到用户奖励记录
                     self.db_manager.execute_query(
                         "INSERT INTO rewards (user_id, reward_name, date) VALUES (?, ?, ?)",
                         (user[0], prize_name, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
