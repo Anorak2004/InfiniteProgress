@@ -1,3 +1,6 @@
+import sqlite3
+
+
 class UserManager:
     def __init__(self, db_manager):
         self.db_manager = db_manager

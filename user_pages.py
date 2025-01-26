@@ -42,14 +42,16 @@ class UserPages:
             user = self.user_manager.login(username, password)
             if user:
                 st.session_state["user"] = user
-                if user[4]:  # 管理员登录
-                    st.experimental_set_query_params(page="admin")
-                else:
-                    st.experimental_set_query_params(page="dashboard")
+                st.session_state["is_logged_in"] = True
+                st.session_state["page"] = "admin" if user[4] else "dashboard"
                 st.success("登录成功！正在跳转...")
-                st.stop()
+                st.query_params.page = "dashboard"
+                st.rerun()
             else:
                 st.error("用户名或密码错误")
+        if st.button("还没有账号？点击注册"):
+            st.session_state["page"] = "register"
+            st.rerun()
 
     def register_page(self):
         st.title("无限进步 - 用户注册")
@@ -60,7 +62,7 @@ class UserPages:
             st.success(message) if "成功" in message else st.error(message)
 
     def dashboard_page(self):
-        if "user" in st.session_state:
+        if "is_logged_in" in st.session_state and st.session_state["is_logged_in"]:
             user = st.session_state["user"]
             st.title(f"无限进步 - 欢迎，{user[1]}！")
             query = "SELECT points FROM users WHERE id=?"
@@ -73,12 +75,12 @@ class UserPages:
             for record in records:
                 st.write(f"日期：{record[0]}，时间：{record[1]}-{record[2]}，活动：{record[3]}，积分：{record[4]}")
         else:
-            st.experimental_set_query_params(page="login")
+            st.session_state["page"] = "login"
             st.error("请先登录")
-            st.stop()
+            st.rerun()
 
     def upload_record_page(self):
-        if "user" in st.session_state:
+        if "is_logged_in" in st.session_state and st.session_state["is_logged_in"]:
             user = st.session_state["user"]
             st.title("无限进步 - 上传活动记录")
             date = st.date_input("日期", value=datetime.today())
@@ -93,6 +95,6 @@ class UserPages:
                 user[0], str(date), str(start_time), str(end_time), activity_type, points))
                 st.success(f"记录上传成功！本次获得积分：{points}")
         else:
-            st.experimental_set_query_params(page="login")
+            st.session_state["page"] = "login"
             st.error("请先登录")
-            st.stop()
+            st.rerun()

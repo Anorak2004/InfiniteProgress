@@ -3,5 +3,7 @@
   <component name="Black">
     <option name="executionMode" value="BINARY" />
     <option name="pathToExecutable" value="C:\Users\luyijie\anaconda3\Scripts\black.exe" />
+    <option name="sdkName" value="InfiniteProgress" />
   </component>
+  <component name="ProjectRootManager" version="2" project-jdk-name="InfiniteProgress" project-jdk-type="Python SDK" />
 </project>

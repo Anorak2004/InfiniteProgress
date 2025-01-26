@@ -13,25 +13,26 @@ if __name__ == "__main__":
 
     st.sidebar.title("无限进步 - 菜单")
 
-    query_params = st.experimental_get_query_params()
-    page = query_params.get("page", ["login"])[0]
+    # 登出按钮
+    if "is_logged_in" in st.session_state and st.session_state["is_logged_in"]:
+        if st.sidebar.button("退出登录"):
+            st.session_state.clear()
+            st.session_state["page"] = "login"
+            st.rerun()
 
-    if "user" not in st.session_state:
-        if page == "register":
-            user_pages.register_page()
-        else:
-            user_pages.login_page()
-    else:
-        user = st.session_state["user"]
-        if user[4]:  # 管理员
-            if page == "admin":
-                admin_pages.admin_dashboard()
-            else:
-                st.experimental_set_query_params(page="admin")
-        else:
-            if page == "dashboard":
-                user_pages.dashboard_page()
-            elif page == "upload":
-                user_pages.upload_record_page()
-            else:
-                st.experimental_set_query_params(page="dashboard")
+    # 页面路由
+    if "page" not in st.session_state:
+        st.session_state["page"] = "login"
+
+    page = st.session_state["page"]
+
+    if page == "register":
+        user_pages.register_page()
+    elif page == "login":
+        user_pages.login_page()
+    elif page == "dashboard":
+        user_pages.dashboard_page()
+    elif page == "upload":
+        user_pages.upload_record_page()
+    elif page == "admin":
+        admin_pages.admin_dashboard()
