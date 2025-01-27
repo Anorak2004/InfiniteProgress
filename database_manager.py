@@ -44,10 +44,13 @@ class DatabaseManager:
 
         # 奖品池表
         c.execute('''CREATE TABLE IF NOT EXISTS prize_pool (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    prize_name TEXT NOT NULL,
-                    quantity INTEGER NOT NULL
-                )''')
+            id INTEGER PRIMARY KEY AUTOINCREMENT,        -- 奖品ID
+            prize_name TEXT NOT NULL,                    -- 奖品名称
+            quantity INTEGER NOT NULL,                   -- 奖品数量
+            weight REAL NOT NULL DEFAULT 1.0,            -- 奖品权重，使用浮点型支持更精细的概率
+            description TEXT,                            -- 奖品描述
+            image_url TEXT                               -- 奖品图片的本地路径或URL    
+        )''')
 
         conn.commit()
         conn.close()
