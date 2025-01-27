@@ -11,6 +11,9 @@ conda activate InfiniteProgress
 LOG_DIR=/home/Anorak/work/InfiniteProgress/logs
 mkdir -p $LOG_DIR
 
+# 切换到项目根目录
+cd /home/Anorak/work/InfiniteProgress
+
 # 启动 Streamlit 应用并保存日志
 /home/Anorak/miniconda3/envs/InfiniteProgress/bin/streamlit run /home/Anorak/work/InfiniteProgress/app.py --server.port 80 --server.address 0.0.0.0 > $LOG_DIR/streamlit.log 2>&1 &
 
