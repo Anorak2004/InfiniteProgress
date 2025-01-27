@@ -139,14 +139,21 @@ class UserPages:
 
             # 检查奖品池
             prizes = self.db_manager.fetch_query(
-                "SELECT id, prize_name, quantity, weight FROM prize_pool WHERE quantity > 0")
+                "SELECT id, prize_name, quantity, weight, description, image_url FROM prize_pool WHERE quantity > 0"
+            )
             if not prizes:
                 st.warning("奖品池为空，稍后再试！")
                 return
 
+            # 显示奖品池
             st.write("### 当前奖品池：")
             for prize in prizes:
-                st.write(f"奖品：{prize[1]}，剩余数量：{prize[2]}")
+                st.subheader(f"奖品：{prize[1]}")  # 奖品名称
+                st.write(f"剩余数量：{prize[2]}")  # 剩余数量
+                if prize[4]:  # 奖品描述
+                    st.write(f"描述：{prize[4]}")
+                if prize[5]:  # 奖品图片
+                    st.image(prize[5], caption=prize[1], use_container_width=True)
 
             if st.button("抽奖"):
                 if points < 10:
@@ -156,7 +163,7 @@ class UserPages:
                     prize_weights = [prize[3] for prize in prizes]
                     selected_prize_index = random.choices(range(len(prizes)), weights=prize_weights, k=1)[0]
                     selected_prize = prizes[selected_prize_index]
-                    prize_id, prize_name, quantity, weight = selected_prize
+                    prize_id, prize_name, quantity, weight = selected_prize[:4]
 
                     # 扣除积分
                     new_points = points - 10
@@ -182,3 +189,4 @@ class UserPages:
             st.session_state["page"] = "login"
             st.error("请先登录")
             st.rerun()
+
