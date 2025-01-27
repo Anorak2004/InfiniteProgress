@@ -7,7 +7,11 @@ from user_manager import UserManager
 from user_pages import UserPages
 
 if __name__ == "__main__":
+<<<<<<< Updated upstream
     db_path = "data/web.db"
+=======
+    db_path = "data/main.db"
+>>>>>>> Stashed changes
     db_manager = DatabaseManager(db_path)
     user_manager = UserManager(db_manager)
     user_pages = UserPages(db_manager, user_manager)
