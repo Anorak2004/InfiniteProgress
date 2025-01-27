@@ -153,7 +153,7 @@ class UserPages:
                 if prize[4]:  # 奖品描述
                     st.write(f"描述：{prize[4]}")
                 if prize[5]:  # 奖品图片
-                    st.image(prize[5], caption=prize[1], use_container_width=True)
+                    st.image(prize[5], use_container_width=True)
 
             if st.button("抽奖"):
                 if points < 10:
