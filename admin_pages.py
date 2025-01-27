@@ -59,7 +59,11 @@ class AdminPages:
 
                 # 修改奖品权重
                 new_weight = st.number_input(
-                    f"设置 {prize[1]} 的概率权重", value=prize[3], min_value=1, step=1, key=f"weight_{prize[0]}"
+                    f"设置 {prize[1]} 的概率权重",
+                    value=float(prize[3]),  # 确保 value 是 float
+                    min_value=0.0,  # 确保 min_value 是 float
+                    step=0.1,  # 确保 step 是 float
+                    key=f"weight_{prize[0]}"
                 )
                 if st.button(f"更新 {prize[1]} 的概率权重", key=f"update_weight_{prize[0]}"):
                     self.db_manager.execute_query(
