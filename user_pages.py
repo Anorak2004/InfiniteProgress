@@ -3,7 +3,7 @@ import random
 
 import pandas as pd
 import streamlit as st
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 import time as t
 
 
@@ -206,9 +206,28 @@ class UserPages:
             early_wake = st.checkbox("🌞 我今天7:30前起床（+1积分）")
 
         # 2️⃣ 选择学习时间段
+        # 查询最近一次学习记录的结束时间
+        last_record_query = """
+                SELECT end_time FROM records 
+                WHERE user_id = ? AND activity_type='学习' 
+                ORDER BY date DESC, end_time DESC LIMIT 1
+            """
+        last_record = self.db_manager.fetch_query(last_record_query, (user[0],))
+
+        # 计算默认开始时间
+        if last_record and last_record[0][0]:  # 有历史记录
+            default_start_time = datetime.strptime(last_record[0][0], "%H:%M").time()
+        else:  # 没有历史记录，默认当前小时
+            now = datetime.now()
+            default_start_time = (now.replace(minute=0, second=0, microsecond=0)).time()
+
+        # 默认结束时间（+1 小时）
+        default_end_time = (datetime.combine(datetime.today(), default_start_time) + timedelta(minutes=40)).time()
+
+        # 选择学习时间段
         st.write("⏳ 请选择学习时间段（至少 40 分钟）")
-        start_time = st.time_input("📍 开始时间")
-        end_time = st.time_input("📍 结束时间")
+        start_time = st.time_input("📍 开始时间", value=default_start_time)
+        end_time = st.time_input("📍 结束时间", value=default_end_time)
 
         # 计算学习时长
         study_points = 0
@@ -232,7 +251,7 @@ class UserPages:
         st.subheader(f"💰 本次可获得积分：{total_points}")
 
         if st.button("✅ 提交记录"):
-            if study_duration > 0 and study_duration < 40:
+            if 0 < study_duration < 40:
                 st.error("⛔ 学习时间至少 40 分钟才能获得积分！")
                 return
 
