@@ -206,18 +206,21 @@ class UserPages:
             early_wake = st.checkbox("🌞 我今天7:30前起床（+1积分）")
 
         # 2️⃣ 选择学习时间段
-        # 查询最近一次学习记录的结束时间
+        # 获取最近一次学习记录的结束时间
         last_record_query = """
-                SELECT end_time FROM records 
-                WHERE user_id = ? AND activity_type='学习' 
-                ORDER BY date DESC, end_time DESC LIMIT 1
-            """
+            SELECT end_time FROM records 
+            WHERE user_id = ? AND activity_type='学习' 
+            ORDER BY date DESC, end_time DESC LIMIT 1
+        """
         last_record = self.db_manager.fetch_query(last_record_query, (user[0],))
 
         # 计算默认开始时间
         if last_record and last_record[0][0]:  # 有历史记录
-            default_start_time = datetime.strptime(last_record[0][0], "%H:%M").time()
-        else:  # 没有历史记录，默认当前小时
+            try:
+                default_start_time = datetime.strptime(last_record[0][0], "%H:%M:%S").time()
+            except ValueError:  # 兼容可能存储为 "HH:MM" 的情况
+                default_start_time = datetime.strptime(last_record[0][0], "%H:%M").time()
+        else:  # 没有历史记录，默认当前整点
             now = datetime.now()
             default_start_time = (now.replace(minute=0, second=0, microsecond=0)).time()
 
