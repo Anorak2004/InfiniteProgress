@@ -69,7 +69,6 @@ class UserPages:
         if st.button("还没有账号？点击注册"):
             st.session_state["page"] = "register"
             st.rerun()
-        return_to_dashboard()
 
     def register_page(self):
         st.title("无限进步 - 用户注册")
@@ -360,6 +359,7 @@ class UserPages:
         items = self.db_manager.fetch_redeemable_items()
         if not items:
             st.warning("暂无可兑换商品")
+            return_to_dashboard()
             return
 
         for item in items:
