@@ -1,5 +1,6 @@
 import streamlit as st
 
+
 class AdminPages:
     def __init__(self, db_manager):
         self.db_manager = db_manager

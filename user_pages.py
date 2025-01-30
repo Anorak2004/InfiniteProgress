@@ -143,7 +143,8 @@ class UserPages:
         days_matrix = list(cal.monthdayscalendar(today.year, today.month))
 
         calendar_html = "<table style='border-collapse: collapse; width: 100%; text-align: center;'>"
-        calendar_html += "<tr>" + "".join(f"<th style='border: 1px solid black; padding: 5px;'> {day} </th>" for day in ["一", "二", "三", "四", "五", "六", "日"]) + "</tr>"
+        calendar_html += "<tr>" + "".join(f"<th style='border: 1px solid black; padding: 5px;'> {day} </th>" for day in
+                                          ["一", "二", "三", "四", "五", "六", "日"]) + "</tr>"
 
         for week in days_matrix:
             calendar_html += "<tr>"
@@ -152,7 +153,6 @@ class UserPages:
                     calendar_html += "<td style='border: 1px solid black; padding: 10px; background-color: #f0f0f0;'> </td>"
                 else:
                     date_str = f"{today.year}-{today.month:02d}-{day:02d}"
-                    print("当前计算的 date_str:", date_str)
                     if date_str in study_dates:
                         bg_color = "#90EE90"  # 绿色，表示已学习
                         tooltip = "✅ 已学习"
@@ -186,7 +186,6 @@ class UserPages:
                 st.write("---")
         else:
             st.write("❌ 你还没有兑换任何奖品")
-
 
     def upload_record_page(self):
         """ 自律记录上传页面（确保学习记录包含时间段） """

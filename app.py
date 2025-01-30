@@ -6,13 +6,12 @@ from database_manager import DatabaseManager
 from user_manager import UserManager
 from user_pages import UserPages
 
-if __name__=="__main__":
+if __name__ == "__main__":
     db_path = "data/data.db"
     db_manager = DatabaseManager(db_path)
     user_manager = UserManager(db_manager)
     user_pages = UserPages(db_manager, user_manager)
     admin_pages = AdminPages(db_manager)
-
     st.sidebar.title("无限进步 - 菜单")
 
     # 登出按钮
@@ -42,4 +41,3 @@ if __name__=="__main__":
         admin_pages.admin_dashboard()
     elif page == "redemption":
         user_pages.redemption_page()
-
