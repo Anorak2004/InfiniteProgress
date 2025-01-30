@@ -42,14 +42,15 @@ class DatabaseManager:
             FOREIGN KEY(user_id) REFERENCES users(id)
         )''')
 
-        # 奖品池表
+        # 奖品池表（增加 is_hidden 字段）
         c.execute('''CREATE TABLE IF NOT EXISTS prize_pool (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,        -- 奖品ID
-            prize_name TEXT NOT NULL,                    -- 奖品名称
-            quantity INTEGER NOT NULL,                   -- 奖品数量
-            weight REAL NOT NULL DEFAULT 1.0,            -- 奖品权重，使用浮点型支持更精细的概率
-            description TEXT,                            -- 奖品描述
-            image_url TEXT                               -- 奖品图片的本地路径或URL    
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            prize_name TEXT NOT NULL,
+            quantity INTEGER NOT NULL,
+            weight REAL NOT NULL DEFAULT 1.0,
+            description TEXT,
+            image_url TEXT,
+            is_hidden INTEGER DEFAULT 0  -- 0: 可见, 1: 隐藏
         )''')
 
         conn.commit()
@@ -82,3 +83,10 @@ class DatabaseManager:
     def update_prize_quantity(self, prize_id, new_quantity):
         query = "UPDATE prize_pool SET quantity = ? WHERE id = ?"
         self.execute_query(query, (new_quantity, prize_id))
+
+    def fetch_prizes(self, include_hidden=False):
+        """ 获取奖品，默认不包含隐藏奖品 """
+        query = "SELECT id, prize_name, quantity, weight, description, image_url, is_hidden FROM prize_pool"
+        if not include_hidden:
+            query += " WHERE is_hidden = 0"
+        return self.fetch_query(query)

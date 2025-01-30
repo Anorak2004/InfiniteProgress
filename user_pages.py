@@ -127,6 +127,7 @@ class UserPages:
             st.error("请先登录")
             st.rerun()
 
+    # user_pages.py
     def lottery_page(self):
         if "is_logged_in" in st.session_state and st.session_state["is_logged_in"]:
             user = st.session_state["user"]
@@ -137,42 +138,41 @@ class UserPages:
             points = self.db_manager.fetch_query(query, (user[0],))[0][0]
             st.subheader(f"您的当前积分：{points}")
 
-            # 检查奖品池
-            prizes = self.db_manager.fetch_query(
-                "SELECT id, prize_name, quantity, weight, description, image_url FROM prize_pool WHERE quantity > 0"
-            )
+            # 只显示非隐藏奖品
+            prizes = self.db_manager.fetch_prizes(include_hidden=False)
             if not prizes:
                 st.warning("奖品池为空，稍后再试！")
                 return
 
-            # 显示奖品池
+            # 显示奖品池（排除隐藏奖品）
             st.write("### 当前奖品池：")
             for prize in prizes:
-                st.subheader(f"奖品：{prize[1]}")  # 奖品名称
-                st.write(f"剩余数量：{prize[2]}")  # 剩余数量
-                if prize[4]:  # 奖品描述
+                st.subheader(f"奖品：{prize[1]}")
+                st.write(f"剩余数量：{prize[2]}")
+                if prize[4]:
                     st.write(f"描述：{prize[4]}")
-                if prize[5]:  # 奖品图片
+                if prize[5]:
                     st.image(prize[5], use_container_width=True)
 
             if st.button("抽奖"):
                 if points < 10:
                     st.error("您的积分不足，至少需要 10 积分！")
                 else:
-                    # 根据权重随机选择奖品
-                    prize_weights = [prize[3] for prize in prizes]
-                    selected_prize_index = random.choices(range(len(prizes)), weights=prize_weights, k=1)[0]
-                    selected_prize = prizes[selected_prize_index]
-                    prize_id, prize_name, quantity, weight = selected_prize[:4]
+                    # **抽取奖品（包含隐藏奖品）**
+                    all_prizes = self.db_manager.fetch_prizes(include_hidden=True)
+                    prize_weights = [prize[3] for prize in all_prizes]
+                    selected_prize_index = random.choices(range(len(all_prizes)), weights=prize_weights, k=1)[0]
+                    selected_prize = all_prizes[selected_prize_index]
+
+                    prize_id, prize_name, quantity, weight, _, _, is_hidden = selected_prize
 
                     # 扣除积分
                     new_points = points - 10
                     self.db_manager.execute_query("UPDATE users SET points = ? WHERE id = ?", (new_points, user[0]))
 
                     # 更新奖品库
-                    self.db_manager.execute_query(
-                        "UPDATE prize_pool SET quantity = quantity - 1 WHERE id = ?", (prize_id,)
-                    )
+                    self.db_manager.execute_query("UPDATE prize_pool SET quantity = quantity - 1 WHERE id = ?",
+                                                  (prize_id,))
 
                     # 添加到奖励记录
                     self.db_manager.execute_query(
@@ -180,9 +180,11 @@ class UserPages:
                         (user[0], prize_name, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
                     )
 
-                    st.success(f"恭喜您抽中奖品：{prize_name}！")
+                    if is_hidden:
+                        st.success("恭喜！您抽中了一个神秘奖品，查看‘已获得的奖品’解锁惊喜！")
+                    else:
+                        st.success(f"恭喜您抽中奖品：{prize_name}！")
 
-                    # 刷新页面以显示最新积分
                     st.session_state["page"] = "lottery"
                     st.rerun()
         else:

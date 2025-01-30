@@ -52,10 +52,18 @@ class AdminPages:
         with tab3:
             st.subheader("奖池管理")
 
-            # 查看奖品及设置概率权重
-            prizes = self.db_manager.fetch_query("SELECT id, prize_name, quantity, weight FROM prize_pool")
+            # 获取所有奖品（包含隐藏奖品）
+            prizes = self.db_manager.fetch_prizes(include_hidden=True)
             for prize in prizes:
-                st.write(f"奖品ID: {prize[0]}, 奖品名: {prize[1]}, 数量: {prize[2]}, 概率权重: {prize[3]}")
+                st.write(
+                    f"奖品ID: {prize[0]}, 奖品名: {prize[1]}, 数量: {prize[2]}, 权重: {prize[3]}, 隐藏: {'是' if prize[6] else '否'}")
+
+                # 修改是否隐藏
+                is_hidden_new = st.checkbox(f"隐藏 {prize[1]}", value=bool(prize[6]), key=f"hidden_{prize[0]}")
+                if st.button(f"更新 {prize[1]} 的隐藏状态", key=f"update_hidden_{prize[0]}"):
+                    self.db_manager.execute_query("UPDATE prize_pool SET is_hidden = ? WHERE id = ?",
+                                                  (int(is_hidden_new), prize[0]))
+                    st.success(f"奖品 {prize[1]} 的隐藏状态已更新")
 
                 # 修改奖品权重
                 new_weight = st.number_input(
